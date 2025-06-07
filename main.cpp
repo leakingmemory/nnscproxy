@@ -1,4 +1,3 @@
-#include <iostream>
 #include "webserver/WebServer.h"
 
 static bool keep_alive = true;
