@@ -123,7 +123,15 @@ bool SmartcardController::TakeReader(const std::string &reader, const std::strin
     {
         auto iterator = this->session.find(reader);
         if (iterator != this->session.end()) {
-            return iterator->second == session;
+            if (iterator->second == session) {
+                update_activity_timestamp(reader);
+                return true;
+            } else if (is_connection_timed_out(reader)) {
+                std::cout << "Reader " << reader << " session " << iterator->second << " timed out, recycling\n";
+                stop.emplace_back(reader);
+                delivery[reader]->release();
+                return false;
+            }
         }
     }
     this->session.insert_or_assign(reader, session);
@@ -146,6 +154,7 @@ bool SmartcardController::TakeReader(const std::string &reader, const std::strin
         input.erase(reader);
         this->session.erase(reader);
     }));
+    update_activity_timestamp(reader);
     return true;
 }
 
@@ -228,6 +237,23 @@ static_assert(SmartcardController::FromBinary("\x90\xC1") == "90C1");
 static_assert(SmartcardController::FromBinary("\xAB\x9C") == "AB9C");
 static_assert(SmartcardController::FromBinary(std::string("\xAB\x00\x9C", 3)) == "AB009C");
 static_assert(SmartcardController::FromBinary(SmartcardController::ToBinary("AB009C")) == "AB009C");
+
+using namespace std::chrono_literals;
+static constexpr auto CONNECTION_TIMEOUT = 1min;
+
+bool SmartcardController::is_connection_timed_out(const std::string &reader) {
+    auto now = std::chrono::steady_clock::now();
+    auto it = last_activity.find(reader);
+    if (it == last_activity.end()) {
+        return true;
+    }
+    auto elapsed = now - it->second;
+    return elapsed > CONNECTION_TIMEOUT;
+}
+
+void SmartcardController::update_activity_timestamp(const std::string &reader) {
+    last_activity.insert_or_assign(reader, std::chrono::steady_clock::now());
+}
 
 std::vector<std::string> SmartcardController::PinCmd(const std::string &scrambled) {
     std::string input{scrambled};

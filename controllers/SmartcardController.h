@@ -13,6 +13,7 @@
 #include <semaphore>
 #include <optional>
 #include <memory>
+#include <chrono>
 
 struct SmartcardKeyRef {
     std::string key;
@@ -28,6 +29,7 @@ private:
     std::map<std::string,std::shared_ptr<std::counting_semaphore<255>>> delivery{};
     std::map<std::string,std::shared_ptr<std::counting_semaphore<255>>> product{};
     std::map<std::string,std::vector<std::string>> output{};
+    std::map<std::string, std::chrono::steady_clock::time_point> last_activity{};
     std::vector<std::string> stop{};
     std::mutex mtx{};
 public:
@@ -36,6 +38,10 @@ public:
     bool TakeReader(const std::string &reader, const std::string &session);
     static constexpr std::string ToBinary(const std::string &hex);
     static constexpr std::string FromBinary(const std::string &binary);
+private:
+    bool is_connection_timed_out(const std::string &reader);
+    void update_activity_timestamp(const std::string &reader);
+public:
     std::optional<std::string> GetReader(const std::string &session);
     std::vector<std::string> PinCmd(const std::string &scrambled);
     std::vector<std::string> RunApdu(const std::string &reader, const std::string &session, const std::vector<std::string> &commands);
