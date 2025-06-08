@@ -1,0 +1,15 @@
+[Unit]
+Description=Norwegian SmartCard Proxy Service
+After=network.target pcscd.service
+Requires=pcscd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/nnscproxy
+Restart=always
+RestartSec=5
+User=nobody
+Group=nobody
+
+[Install]
+WantedBy=multi-user.target

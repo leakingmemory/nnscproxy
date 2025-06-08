@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.31)
 project(nnscproxy LANGUAGES CXX)
 
+option(WITH_SYSTEMD "Enable systemd support" ON)
+
 set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -32,5 +34,7 @@ install(TARGETS nnscproxy DESTINATION bin)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
     install(PROGRAMS freebsd/nnscproxy.sysrc DESTINATION /usr/local/etc/rc.d RENAME nnscproxy)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND WITH_SYSTEMD)
+    install(PROGRAMS systemd/nnscproxy.systemd DESTINATION /usr/lib/systemd/system RENAME nnscproxy.service)
 endif ()
 
