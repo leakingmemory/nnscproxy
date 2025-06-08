@@ -27,3 +27,8 @@ target_link_libraries(nnscproxy PRIVATE webserver)
 target_link_libraries(nnscproxy PRIVATE -lpcsclite cpprestsdk::cpprest -lcrypto)
 
 install(TARGETS nnscproxy DESTINATION bin)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+    install(PROGRAMS freebsd/nnscproxy.sysrc DESTINATION /usr/local/etc/rc.d RENAME nnscproxy)
+endif ()
+

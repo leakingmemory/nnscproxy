@@ -7,7 +7,85 @@ void handle_term_signal(int) {
     keep_alive = false;
 }
 
-int main() {
+int main(int argc, char **argv) {
+    bool foreground_mode = false;
+// Check for -f argument for foreground mode
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "-f") == 0) {
+            foreground_mode = true;
+            break;
+        }
+    }
+
+    if (!foreground_mode) {
+        // Fork and run as a daemon
+        pid_t pid = fork();
+        if (pid < 0) {
+            // Fork failed
+            std::cerr << "Failed to fork process" << std::endl;
+            return EXIT_FAILURE;
+        }
+        if (pid > 0) {
+            // Exit parent process
+            return EXIT_SUCCESS;
+        }
+
+        // Create a new session and set the process as group leader
+        if (setsid() < 0) {
+            std::cerr << "Failed to create a new session" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // Fork again to ensure the process cannot acquire a controlling terminal
+        pid = fork();
+        if (pid < 0) {
+            // Fork failed
+            std::cerr << "Failed to fork process (second attempt)" << std::endl;
+            return EXIT_FAILURE;
+        }
+        if (pid > 0) {
+            // Exit the first child process
+            return EXIT_SUCCESS;
+        }
+
+        // Set file permissions mask to avoid inheriting restrictive permissions
+        umask(0);
+
+        // Change the working directory to /
+        if (chdir("/") < 0) {
+            std::cerr << "Failed to change directory to /" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // Redirect standard file descriptors to /dev/null
+        freopen("/dev/null", "r", stdin);
+        // Redirect stdout to /var/log/nnscproxy.stdout.log
+        const char *stdout_log_file = "/var/log/nnscproxy.stdout.log";
+        FILE *stdout_log = freopen(stdout_log_file, "a", stdout);
+        if (stdout_log == nullptr) {
+            std::cerr << "Failed to redirect stdout to log file: " << stdout_log_file << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // Alternatively, redirect stderr to the same log file if needed
+        const char *stderr_log_file = "/var/log/nnscproxy.stderr.log";
+        FILE *stderr_log = freopen(stderr_log_file, "a", stderr);
+        if (stderr_log == nullptr) {
+            std::cerr << "Failed to redirect stderr to log file: " << stderr_log_file << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        // Write the PID to /var/run/nnscproxy.pid
+        const char *pid_file = "/var/run/nnscproxy.pid";
+        FILE *fpid = fopen(pid_file, "w");
+        if (fpid == nullptr) {
+            std::cerr << "Failed to open PID file: " << pid_file << std::endl;
+            return EXIT_FAILURE;
+        }
+        fprintf(fpid, "%d\n", getpid());
+        fclose(fpid);
+    }
+
     std::string listen{};
     {
         auto smartcardController = std::make_shared<SmartcardController>();

@@ -1,0 +1,30 @@
+
+#!/bin/sh
+
+# PROVIDE: nnscproxy
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="nnscproxy"
+rcvar=nnscproxy_enable
+
+# Set the command to your program's location
+command="/usr/local/bin/nnscproxy"
+pidfile="/var/run/${name}.pid"
+start_precmd=nnscproxy_startprecmd
+
+nnscproxy_startprecmd()
+{
+    # Ensure the PID file directory exists
+    if [ ! -d "$(dirname $pidfile)" ]; then
+        mkdir -p "$(dirname $pidfile)"
+        chmod 755 "$(dirname $pidfile)"
+    fi
+}
+
+load_rc_config $name
+: ${nnscproxy_enable:=no}
+
+run_rc_command "$1"
