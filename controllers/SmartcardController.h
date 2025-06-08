@@ -12,6 +12,7 @@
 #include <thread>
 #include <semaphore>
 #include <optional>
+#include <memory>
 
 struct SmartcardKeyRef {
     std::string key;

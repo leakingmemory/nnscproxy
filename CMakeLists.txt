@@ -13,6 +13,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
     add_compile_options("-I/usr/local/include/PCSC")
     add_compile_options("-DFREEBSD")
     add_link_options("-L/usr/local/lib")
+else()
+    add_compile_options("-I/usr/include/PCSC")
 endif()
 
 find_package(cpprestsdk REQUIRED)
