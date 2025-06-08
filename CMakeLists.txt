@@ -19,9 +19,11 @@ find_package(cpprestsdk REQUIRED)
 
 add_subdirectory(webserver)
 
-add_executable(nnscproxy main.cpp)
+add_executable(nnscproxy main.cpp
+        controllers/SmartcardController.cpp
+        controllers/SmartcardController.h)
 
 target_link_libraries(nnscproxy PRIVATE webserver)
-target_link_libraries(nnscproxy PRIVATE cpprestsdk::cpprest -lcrypto)
+target_link_libraries(nnscproxy PRIVATE -lpcsclite cpprestsdk::cpprest -lcrypto)
 
 install(TARGETS nnscproxy DESTINATION bin)
