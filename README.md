@@ -26,13 +26,16 @@ server {
 </pre>
 
 To generate a certificate:
-1. <pre>
+1.
+<pre>
 openssl req -x509 -nodes -new -sha256 -days 10240 -newkey rsa:2048 -keyout RootCA.key -out RootCA.pem -subj "/C=NO/CN=Local-Root-CA"
 </pre>
-2. <pre>
+2. 
+<pre>
 openssl x509 -outform pem -in RootCA.pem -out RootCA.crt
 </pre>
-3.  Create file domains.ext: <pre>
+3. Create file domains.ext:
+<pre>
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
 keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
@@ -41,9 +44,11 @@ subjectAltName = @alt_names
 DNS.1 = localhost
 IP.1 = 127.0.0.1
 </pre>
-4. <pre>
+4.
+<pre>
 openssl req -new -nodes -newkey rsa:2048 -keyout localhost.key -out localhost.csr -subj "/C=NO/CN=localhost"
 </pre>
-5. <pre>
+5.
+<pre>
 openssl x509 -req -sha256 -days 1024 -in localhost.csr -CA RootCA.pem -CAkey RootCA.key -CAcreateserial -extfile domains.ext -out localhost.crt
 </pre>
