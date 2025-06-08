@@ -71,7 +71,11 @@ void SmartcardController::RunReader(const std::string &reader) {
             iterator = input[reader].erase(iterator);
         }
 
-        std::cout << "APDU req: " << FromBinary(apdu) << "\n";
+        if (apdu.size() > 5 && apdu[0] == static_cast<char>(0xA0) && apdu[1] == 0x20 && apdu[2] == 0 && apdu[3] == static_cast<char>(0x82) && apdu[4] == 8) {
+            std::cout << "APDU req: pin req not logged\n";
+        } else {
+            std::cout << "APDU req: " << FromBinary(apdu) << "\n";
+        }
 
         uint8_t rsp[258];  DWORD rlen = sizeof(rsp);
 
@@ -244,7 +248,8 @@ std::vector<std::string> SmartcardController::PinCmd(const std::string &scramble
         return {};
     }
     auto key = iterator->second;
-    std::cout << "Key " << FromBinary(key) << "\n";
+    // to not log the pin or key to deobfuscate pin
+    // std::cout << "Key " << FromBinary(key) << "\n";
     input.erase(0, 4);
     if (input.size() < 2) {
         return {};
@@ -271,14 +276,19 @@ SmartcardController::RunApdu(const std::string &reader, const std::string &sessi
     apdu.reserve(commands.size());
     std::cout << "Reader " << reader << " session " << session << " requests:\n";
     for (const auto &cmd : commands) {
-        std::cout << "Reader " << reader << " session " << session << " request " << cmd << "\n";
         if (cmd.starts_with("FFFF0104")) {
+            // to not log the pin or key to deobfuscate pin
+            // std::cout << "Reader " << reader << " session " << session << " request " << cmd << "\n";
+            std::cout << "Reader " << reader << " session " << session << " request " << "FFFF0104**omitted**" << "\n";
             auto cmds = PinCmd(ToBinary(cmd));
             for (const auto &cmd : cmds) {
-                std::cout << "Reader " << reader << " session " << session << " pin request " << FromBinary(cmd) << "\n";
+                // to not log the pin or key to deobfuscate pin
+                // std::cout << "Reader " << reader << " session " << session << " pin request " << FromBinary(cmd) << "\n";
+                std::cout << "Reader " << reader << " session " << session << " pin request " << "*omitted*" << "\n";
                 apdu.emplace_back(cmd);
             }
         } else {
+            std::cout << "Reader " << reader << " session " << session << " request " << cmd << "\n";
             apdu.emplace_back(ToBinary(cmd));
         }
     }
@@ -344,7 +354,8 @@ SmartcardKeyRef SmartcardController::GetRef() {
         std::uniform_int_distribution<int> dist{0, 0x7FFFFFFF};
         ref = static_cast<uint64_t>(dist(rd) & 0x7FFFFFFF);
     }
-    std::cout << "Ref key " << ref << " " << FromBinary(data) << "\n";
+    // to not log the pin or key to deobfuscate pin
+    // std::cout << "Ref key " << ref << " " << FromBinary(data) << "\n";
     SmartcardKeyRef scRef{.key = FromBinary(data), .ref = ref};
     refs.insert_or_assign(ref, data);
     return scRef;
